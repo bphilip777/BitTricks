@@ -3,7 +3,8 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const lib_mod = b.createModule(.{
+
+    const bittricks = b.addModule("BitTricks", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -12,12 +13,12 @@ pub fn build(b: *std.Build) void {
     const lib = b.addLibrary(.{
         .linkage = .static,
         .name = "BitTricks",
-        .root_module = lib_mod,
+        .root_module = bittricks,
     });
     b.installArtifact(lib);
 
     const lib_unit_tests = b.addTest(.{
-        .root_module = lib_mod,
+        .root_module = bittricks,
     });
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
