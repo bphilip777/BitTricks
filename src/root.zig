@@ -3,7 +3,7 @@ const testing = std.testing;
 
 const CHAR_BIT = 8; // # of bits per byte - assume 8
 
-export fn sign(comptime T: type, x: T) T {
+pub export fn sign(comptime T: type, x: T) T {
     switch (@typeInfo(@TypeOf(T))) {
         .int, .float => {},
         else => @compileError("Incorrect Type - accepts ints/floats"),
@@ -14,29 +14,29 @@ export fn sign(comptime T: type, x: T) T {
     return (x > 0) - (x < 0);
 }
 
-export fn isOppSign(comptime T: type, x: T, y: T) bool {
+pub export fn isOppSign(comptime T: type, x: T, y: T) bool {
     return (x ^ y) < 0;
 }
 
-export fn intAbs(comptime T: type, x: T) T {
+pub export fn intAbs(comptime T: type, x: T) T {
     const mask = x >> @sizeOf(x) - CHAR_BIT;
     return (x + mask) ^ mask;
 }
 
-export fn minBranchless(comptime T: type, x: T, y: T) T {
+pub export fn minBranchless(comptime T: type, x: T, y: T) T {
     return y ^ ((x ^ y) & -(x < y));
 }
 
-export fn maxBranchless(comptime T: type, x: T, y: T) T {
+pub export fn maxBranchless(comptime T: type, x: T, y: T) T {
     return x ^ ((x ^ y) & -(x < y));
 }
 
 // unsigned int
-export fn isPow2(comptime T: type, x: T) bool {
+pub export fn isPow2(comptime T: type, x: T) bool {
     return x and !(x & (x -% 1));
 }
 
-export fn getMaxBits(comptime T: type) T {
+pub export fn getMaxBits(comptime T: type) T {
     switch (T) {
         .int, .float => |int| {
             const n_bits = int.bits;
@@ -46,7 +46,7 @@ export fn getMaxBits(comptime T: type) T {
     }
 }
 
-export fn reverse(comptime T: type, x: T) T {
+pub export fn reverse(comptime T: type, x: T) T {
     const max_bits: T = @bitSizeOf(x);
     var mask: T = 0;
     for (0..max_bits) |i| {
@@ -54,7 +54,7 @@ export fn reverse(comptime T: type, x: T) T {
     }
 }
 
-fn turnOnBitsBW2Bits(
+pub export fn turnOnBitsBW2Bits(
     comptime T: type,
     value: T,
     prev_carry: bool,
