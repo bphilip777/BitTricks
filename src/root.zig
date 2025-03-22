@@ -54,8 +54,6 @@ export fn reverse(comptime T: type, x: T) T {
     }
 }
 
-test "Reverse Bits" {}
-
 fn turnOnBitsBW2Bits(
     comptime T: type,
     value: T,
@@ -105,7 +103,7 @@ fn turnOnBitsBW2Bits(
     };
 }
 
-test "Create Mask" {
+test "turnOnBitsBW2Bits" {
     const T: type = u8;
     const input_masks = [_]T{ 8, 66, 66, 74, 0, 255, 255 };
     const input_carries = [_]bool{ false, false, true, true, true, false, true };
