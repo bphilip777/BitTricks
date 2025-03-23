@@ -1,12 +1,12 @@
 const std = @import("std");
 const testing = std.testing;
 
-const CHAR_BIT = 8; // # of bits per byte - assume 8
+const CHAR_BIT: u8 = 64;
 
-pub export fn sign(comptime T: type, x: T) T {
-    switch (@typeInfo(@TypeOf(T))) {
+pub fn sign(comptime T: type, x: T) T {
+    switch (@typeInfo(T)) {
         .int, .float => {},
-        else => @compileError("Incorrect Type - accepts ints/floats"),
+        else => @compileError("Incorrect Type - fn accepts floats/ints."),
     }
 
     if (@typeInfo(@TypeOf(T)).int.signedness == .unsigned) return 0;
@@ -14,30 +14,50 @@ pub export fn sign(comptime T: type, x: T) T {
     return (x > 0) - (x < 0);
 }
 
-pub export fn isOppSign(comptime T: type, x: T, y: T) bool {
+pub fn isOppSign(comptime T: type, x: T, y: T) bool {
+    switch (@typeInfo(T)) {
+        .int, .float => {},
+        else => @compileError("Incorrect Type - fn accepts floats/ints."),
+    }
     return (x ^ y) < 0;
 }
 
-pub export fn intAbs(comptime T: type, x: T) T {
+pub fn abs(comptime T: type, x: T) T {
+    switch (@typeInfo(T)) {
+        .int, .float => {},
+        else => @compileError("Incorrect Type - fn accepts floats/ints."),
+    }
     const mask = x >> @sizeOf(x) - CHAR_BIT;
     return (x + mask) ^ mask;
 }
 
-pub export fn minBranchless(comptime T: type, x: T, y: T) T {
+pub fn minBranchless(comptime T: type, x: T, y: T) T {
+    switch (@typeInfo(T)) {
+        .int, .float => {},
+        else => @compileError("Incorrect Type - fn accepts floats/ints."),
+    }
     return y ^ ((x ^ y) & -(x < y));
 }
 
-pub export fn maxBranchless(comptime T: type, x: T, y: T) T {
+pub fn maxBranchless(comptime T: type, x: T, y: T) T {
+    switch (@typeInfo(T)) {
+        .int, .float => {},
+        else => @compileError("Incorrect Type - fn accepts floats/ints."),
+    }
     return x ^ ((x ^ y) & -(x < y));
 }
 
 // unsigned int
-pub export fn isPow2(comptime T: type, x: T) bool {
+pub fn isPow2(comptime T: type, x: T) bool {
+    switch (@typeInfo(T)) {
+        .int, .float => {},
+        else => @compileError("Incorrect Type - fn accepts floats/ints."),
+    }
     return x and !(x & (x -% 1));
 }
 
-pub export fn getMaxBits(comptime T: type) T {
-    switch (T) {
+pub fn getMaxBits(comptime T: type) T {
+    switch (@typeInfo(T)) {
         .int, .float => |int| {
             const n_bits = int.bits;
             return if (@typeInfo(@TypeOf(n_bits)).int.bits > n_bits) @truncate(n_bits) else n_bits;
@@ -46,7 +66,11 @@ pub export fn getMaxBits(comptime T: type) T {
     }
 }
 
-pub export fn reverse(comptime T: type, x: T) T {
+pub fn reverse(comptime T: type, x: T) T {
+    switch (@typeInfo(T)) {
+        .int => {},
+        else => @compileError("Incorrect Type - fn accepts ints."),
+    }
     const max_bits: T = @bitSizeOf(x);
     var mask: T = 0;
     for (0..max_bits) |i| {
@@ -54,7 +78,7 @@ pub export fn reverse(comptime T: type, x: T) T {
     }
 }
 
-pub export fn turnOnBitsBW2Bits(
+pub fn turnOnBitsBW2Bits(
     comptime T: type,
     value: T,
     prev_carry: bool,

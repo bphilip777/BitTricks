@@ -4,25 +4,33 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const bittricks = b.addModule("BitTricks", .{
+    _ = b.addModule("BitTricks", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    const lib = b.addLibrary(.{
-        .linkage = .static,
-        .name = "BitTricks",
-        .root_module = bittricks,
-    });
-    b.installArtifact(lib);
+    // const bittricks = b.addModule("BitTricks", .{
+    //     .root_source_file = b.path("src/root.zig"),
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
-    const lib_unit_tests = b.addTest(.{
-        .root_module = bittricks,
-    });
+    // const exe = b.addExecutable(options: ExecutableOptions)
 
-    const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+    // const lib = b.addLibrary(.{
+    //     .linkage = .static,
+    //     .name = "BitTricks",
+    //     .root_module = bittricks,
+    // });
+    // b.installArtifact(lib);
 
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&run_lib_unit_tests.step);
+    // const lib_unit_tests = b.addTest(.{
+    //     .root_module = bittricks,
+    // });
+    //
+    // const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
+    //
+    // const test_step = b.step("test", "Run unit tests");
+    // test_step.dependOn(&run_lib_unit_tests.step);
 }
