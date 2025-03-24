@@ -216,7 +216,6 @@ test "Reverse" {
     const expected_answers = [_]u16{ 1 << 0, 1 << 15 };
     for (inputs, expected_answers) |input, expected_answer| {
         const answer = reverse(u16, input);
-        std.debug.print("Reverse: {b} {b} {b}\n", .{ input, expected_answer, answer });
         try std.testing.expect(answer == expected_answer);
     }
 }
@@ -300,4 +299,43 @@ test "turnOnBitsBW2Bits" {
     }
 
     try std.testing.expect(true);
+}
+
+fn doubleType(comptime T: type) type {
+    switch (@typeInfo(T)) {
+        .int => |int| {
+            switch (int.signedness) {
+                .unsigned => {
+                    return @Type(.{ .int = .{ .bits = @typeInfo(T).int.bits * 2, .signedness = .unsigned } });
+                },
+                .signed => @compileError("Incorrect Type - fn only takes unsigned int."),
+            }
+        },
+        else => @compileError("Incorrect Type - fn only takes unsigned int."),
+    }
+}
+
+// returns a type at double the size
+pub fn interleave(comptime T: type, x: T, y: T) doubleType(T) {
+    // interleave bits of x and y, x is even positions, y is odd positions
+    const max_bits = @typeInfo(T).int.bits;
+    const T2: type = doubleType(T);
+
+    var z: T2 = 0;
+    for (0..max_bits) |i| {
+        z |= (x & @as(T, 1) << @truncate(i)) << @truncate(i) | (y & @as(T, 1) << @truncate(i)) << @truncate(i + 1);
+    }
+
+    return z;
+}
+
+test "Interleave" {
+    const x_inputs = [_]u16{ 1, 7, 5 };
+    const y_inputs = [_]u16{ 1, 7, 3 };
+    const expected_answers = [_]u16{ 3, 63, 27 };
+    for (x_inputs, y_inputs, expected_answers) |x, y, expected_answer| {
+        const answer = interleave(u16, x, y);
+        try std.testing.expect(answer == expected_answer);
+        try std.testing.expect(@TypeOf(answer) == u32);
+    }
 }
