@@ -339,3 +339,16 @@ test "Interleave" {
         try std.testing.expect(@TypeOf(answer) == u32);
     }
 }
+
+pub fn turnOffLastBit(comptime T: type, x: T) T {
+    return x & (x - 1);
+}
+
+test "Turn Off Bit" {
+    const inputs = [_]u16{ 15, 3, 9, 11 };
+    const expected_answers = [_]u16{ 14, 2, 8, 10 };
+    for (inputs, expected_answers) |input, expected_answer| {
+        const answer = turnOffLastBit(u16, input);
+        try std.testing.expect(answer == expected_answer);
+    }
+}
