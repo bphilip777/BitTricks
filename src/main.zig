@@ -9,9 +9,9 @@ pub fn sign(comptime T: type, x: T) i8 {
         else => @compileError("Incorrect Type - fn accepts floats/ints."),
     }
 
-    if (@typeInfo(@TypeOf(T)).int.signedness == .unsigned) return 0;
+    if (@typeInfo(T).int.signedness == .unsigned) return 0;
 
-    return @as(i8, x > 0) - @as(i8, x < 0);
+    return @as(i8, @intFromBool(x > 0)) - @as(i8, @intFromBool(x < 0));
 }
 
 test "Sign" {
@@ -34,7 +34,7 @@ pub fn isOppSign(comptime T: type, x: T, y: T) bool {
 test "Is Opp Sign" {
     const input_xs = [_]i32{ 100, 100, -50, -100 };
     const input_ys = [_]i32{ 50, -50, 100, -50 };
-    const expected_answers = [_]i32{ false, true, true, false };
+    const expected_answers = [_]bool{ false, true, true, false };
     for (input_xs, input_ys, expected_answers) |x, y, expected_answer| {
         const answer = isOppSign(i32, x, y);
         try std.testing.expect(answer == expected_answer);
@@ -48,7 +48,7 @@ pub fn absWOBranching(comptime T: type, x: T) T {
         },
         else => @compileError("Incorrect Type - fn accepts floats/ints."),
     }
-    const mask = x >> @sizeOf(x) * CHAR_BIT - 1;
+    const mask = x >> @sizeOf(T) * CHAR_BIT - 1;
     return (x + mask) ^ mask;
 }
 
@@ -66,7 +66,7 @@ pub fn minBranchless(comptime T: type, x: T, y: T) T {
         .int, .float => {},
         else => @compileError("Incorrect Type - fn accepts floats/ints."),
     }
-    return y ^ ((x ^ y) & -(x < y));
+    return y ^ ((x ^ y) & -@as(T, @intFromBool(x < y)));
 }
 
 test "Min Branchless" {
@@ -84,7 +84,7 @@ pub fn maxBranchless(comptime T: type, x: T, y: T) T {
         .int => {},
         else => @compileError("Incorrect Type - fn accepts floats/ints."),
     }
-    return x ^ ((x ^ y) & -(x < y));
+    return x ^ ((x ^ y) & -@as(T, @intFromBool(x < y)));
 }
 
 test "Max Branchless" {
@@ -92,19 +92,17 @@ test "Max Branchless" {
     const input_ys = [_]i32{ -100, 100 };
     const expected_answers = [_]i32{ 100, 100 };
     for (input_xs, input_ys, expected_answers) |x, y, expected_answer| {
-        const answer = minBranchless(i32, x, y);
+        const answer = maxBranchless(i32, x, y);
         try std.testing.expect(answer == expected_answer);
     }
 }
 
 pub fn isPow2(comptime T: type, x: T) bool {
     switch (@typeInfo(T)) {
-        .int => |int| {
-            if (int.signedness == .signed) @compileError("Incorrect Type - fn accepts floats/ints.");
-        },
+        .int => {},
         else => @compileError("Incorrect Type - fn accepts floats/ints."),
     }
-    return x and !(x & (x -% 1));
+    return (x > 0) and (x & (x -% 1)) == 0;
 }
 
 test "Is Power of 2" {
@@ -118,28 +116,108 @@ test "Is Power of 2" {
 
 pub fn getMaxBits(comptime T: type) T {
     switch (@typeInfo(T)) {
-        .int, .float => |t| {
-            const n_bits = t.bits;
-            return if (@typeInfo(@TypeOf(n_bits)).int.bits > n_bits) @truncate(n_bits) else n_bits;
+        .int => |int| {
+            const n_bits: u16 = int.bits; // u16
+            return if (@typeInfo(@TypeOf(n_bits)).int.bits > n_bits) @as(T, @truncate(n_bits)) else @as(T, n_bits);
+        },
+        .float => |float| {
+            const n_bits: u16 = float.bits; // u16
+            return if (@typeInfo(@TypeOf(n_bits)).int.bits > n_bits) @as(T, @truncate(n_bits)) else @as(T, @floatFromInt(n_bits));
         },
         .bool => return 1,
+        else => @compileError("Fn only accepts ints/floats/bools"),
     }
 }
 
 test "Get Max Bits" {
-    const expected_answers = 
+    const expected_answer: u16 = 32;
     const answer = getMaxBits(i32);
+    try std.testing.expect(expected_answer == answer);
+}
+
+pub fn setBitsConditional(comptime T: type, f: bool, m: T, w: T) T {
+    switch (@typeInfo(T)) {
+        .int => {},
+        else => @compileError("Incorrect input type. Fn only accepts unsigned ints."),
+    }
+    return (w & ~m) | (@as(T, @intFromBool(!f)) & m);
+}
+
+pub fn mergeBitsFrom2Values(comptime T: type, a: T, b: T, m: T) T {
+    // a = value to merge in non-masked bits
+    // b = value to merge in masked bits
+    // m = 1 where bits come from b, 0 where bits come from a
+    switch (@typeInfo(T)) {
+        .int => |int| {
+            switch (int.signedness) {
+                .unsigned => {},
+                else => @compileError("Fn Accepts only unsigned ints."),
+            }
+        },
+        else => @compileError("Fn accepts only unsigned ints."),
+    }
+    return a ^ ((a ^ b) & m);
+}
+
+pub fn countBits(comptime T: type, v: T) T {
+    // Brian Kernighan's way
+    switch (@typeInfo(T)) {
+        .int => |int| {
+            switch (int.signedness) {
+                .unsigned => {},
+                .signed => @compileError("Fn only accepts unsigned int."),
+            }
+        },
+        else => @compileError("Fn only accepts unsigned int."),
+    }
+
+    var c: T = 0;
+    var v1: T = v;
+    while (v1 > 0) : (c += 1) {
+        v1 &= v1 - 1;
+    }
+    return c;
+}
+
+test "Count Bits" {
+    const inputs = [_]u16{ 65535, 255 };
+    const expected_answers = [_]u16{ 16, 8 };
+
+    for (inputs, expected_answers) |input, expected_answer| {
+        const answer = countBits(u16, input);
+        try std.testing.expect(answer == expected_answer);
+    }
 }
 
 pub fn reverse(comptime T: type, x: T) T {
     switch (@typeInfo(T)) {
-        .int => {},
-        else => @compileError("Incorrect Type - fn accepts ints."),
+        .int => |int| {
+            switch (int.signedness) {
+                .unsigned => {},
+                .signed => @compileError("Incorrect Type - fn only accepts unsigned ints."),
+            }
+        },
+        else => @compileError("Incorrect Type - fn only accepts unsigned ints."),
     }
-    const max_bits: T = @bitSizeOf(x);
-    var mask: T = 0;
-    for (0..max_bits) |i| {
-        mask |= ((@as(T, 1) << max_bits - i - 1) & x);
+
+    const max_bits = @typeInfo(T).int.bits;
+    var y = x;
+    var r = x;
+    for (0..max_bits) |_| {
+        r <<= 1;
+        r |= y & 1;
+        y >>= 1;
+    }
+    return r;
+}
+
+test "Reverse" {
+    const inputs = [_]u16{ 1 << 15, 1 << 0 };
+    const expected_answers = [_]u16{ 1 << 0, 1 << 15 };
+    for (inputs, expected_answers) |input, expected_answer| {
+        const answer = reverse(u16, input);
+        std.debug.print("Reverse: {b} {b} {b}\n", .{ input, expected_answer, answer });
+        try std.testing.expect(answer == expected_answer);
     }
 }
 
@@ -147,6 +225,13 @@ pub fn swapXOR(comptime T: type, a: *T, b: *T) void {
     a.* ^= b.*;
     b.* ^= a.*;
     a.* ^= b.*;
+}
+
+test "Swap XOR" {
+    var a: i32 = 100;
+    var b: i32 = 50;
+    swapXOR(i32, &a, &b);
+    try std.testing.expect(a == 50 and b == 100);
 }
 
 pub fn turnOnBitsBW2Bits(
