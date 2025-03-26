@@ -364,9 +364,12 @@ pub fn turnOnBitsBWPairsOfBits(
     comptime T: type,
     mask: createMask(T),
 ) createMask(T) {
-    // Default: turns on bits b/w every 2 bits, default start is first bit to second bit
-    // Previous Carry = tells fn to turn on 0 to first flipped bit
-    // Value = mask containing flipped bits
+    // Goal: turn on bits b/w every 2 bits, flip starting bit based on mask and carry
+    // mask = struct containing mask and carry
+    // - mask = unsigned int bitcasted from a vector - leftmost data = lsb = rightmost bit, rightmost data = msb = leftmost bit (given little endian)
+    // - if mask doesnt come from bitcasted vector, must use @bitReverse
+    // - carry = pairs of bits start from a previous loop to first bit
+
     // Cases:
     // 1. Mask = All 0's, Carry = True -> Mask = All 1's, Carry = True, regardless of # of bits
     // 2. Mask = All 1's, Carry = True -> Depends on # of turned on bits
@@ -383,7 +386,7 @@ pub fn turnOnBitsBWPairsOfBits(
         else => @compileError("T must be an unsigned int"),
     }
 
-    var temp: T = @bitReverse(mask.mask);
+    var temp: T = mask.mask;
 
     var new_mask: createMask(T) = .{
         .mask = 0,
