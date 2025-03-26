@@ -341,7 +341,7 @@ test "Interleave" {
 }
 
 pub fn turnOffLastBit(comptime T: type, x: T) T {
-    return x & (x - 1);
+    return x & (x -% 1);
 }
 
 test "Turn Off Bit" {
