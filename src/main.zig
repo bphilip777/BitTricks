@@ -366,9 +366,10 @@ pub fn turnOnBitsBWPairsOfBits(
 ) createMask(T) {
     // Goal: turn on bits b/w every 2 bits, flip starting bit based on mask and carry
     // mask = struct containing mask and carry
-    // - mask = unsigned int bitcasted from a vector - leftmost data = lsb = rightmost bit, rightmost data = msb = leftmost bit (given little endian)
+    // - read direction: left to right
+    // - mask = unsigned int bitcasted from a vector - lsb = leftmost character, msb = rightmost character
     // - if mask doesnt come from bitcasted vector, must use @bitReverse
-    // - carry = pairs of bits start from a previous loop to first bit
+    // - carry = sets first bit to 0 and second bit to first turned on bit
 
     // Cases:
     // 1. Mask = All 0's, Carry = True -> Mask = All 1's, Carry = True, regardless of # of bits
@@ -407,8 +408,10 @@ pub fn turnOnBitsBWPairsOfBits(
         temp = turnOffLastBit(T, temp);
 
         // end inclusive
+        std.debug.print("First Bit: {}\n", .{first_bit});
+        std.debug.print("Second Bit: {}\n", .{second_bit});
         for (first_bit..second_bit + 1) |i| {
-            new_mask.mask |= @as(T, 1) << @truncate(max_bit - i - 1);
+            new_mask.mask |= @as(T, 1) << @truncate(i);
         }
     }
 
@@ -420,7 +423,7 @@ pub fn turnOnBitsBWPairsOfBits(
         if (second_bit == max_bit) {
             // end not inclusive
             for (first_bit..second_bit) |i| {
-                new_mask.mask |= @as(T, 1) << @truncate(max_bit - i - 1);
+                new_mask.mask |= @as(T, 1) << @truncate(i);
             }
             new_mask.carry = true;
             return new_mask;
@@ -429,7 +432,7 @@ pub fn turnOnBitsBWPairsOfBits(
 
         // end inclusive
         for (first_bit..second_bit + 1) |i| {
-            new_mask.mask |= @as(T, 1) << @truncate(max_bit - i - 1);
+            new_mask.mask |= @as(T, 1) << @truncate(i);
         }
     }
 
