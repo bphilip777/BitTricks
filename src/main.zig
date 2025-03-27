@@ -408,8 +408,6 @@ pub fn turnOnBitsBWPairsOfBits(
         temp = turnOffLastBit(T, temp);
 
         // end inclusive
-        std.debug.print("First Bit: {}\n", .{first_bit});
-        std.debug.print("Second Bit: {}\n", .{second_bit});
         for (first_bit..second_bit + 1) |i| {
             new_mask.mask |= @as(T, 1) << @truncate(i);
         }
